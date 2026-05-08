@@ -1,0 +1,6 @@
+Machine A vibration incident summary.
+
+On May 12, 2022, Machine A showed vibration readings above 180 Hz during normal production.
+The maintenance team found bearing wear in Motor B.
+The issue was fixed by replacing the bearing assembly and realigning the motor shaft.
+Downtime was 4 hours.

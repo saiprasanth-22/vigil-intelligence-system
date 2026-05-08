@@ -1,0 +1,8 @@
+﻿Machine-A Maintenance Report
+
+Date: 2026-04-25
+Issue: High vibration detected on Machine-A.
+Vibration reached 88.
+Cause: Loose bearing and poor lubrication.
+Fix: Bearing was tightened and lubrication was applied.
+Result: Vibration returned to normal range.
