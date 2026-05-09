@@ -23,22 +23,7 @@ build/
 *.log
 backend/data/
 
-# AI assistant/tooling folders
-.claude/
-.codex/
-claude/
-codex/
-.aider*
-.cursor/
-.continue/
-.windsurf/
-.roo/
-.kilocode/
-.gemini/
-.idx/
-.mcp/
-
-# Local AI/model caches and generated datasets
+# Local model caches and generated datasets
 .cache/
 *.safetensors
 *.ckpt
