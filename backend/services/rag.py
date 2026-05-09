@@ -2,7 +2,7 @@ from time import perf_counter
 from typing import Any
 
 from db.hybrid_store import store
-from services.groq_client import generate_answer
+from services.groq_client import generate_answer_with_usage
 from services.logger import log_action
 from services.vector_store import search_chunks
 
@@ -18,6 +18,7 @@ def answer_query(user_id: str, message: str, mode: str = "unified") -> dict[str,
     sources = []
     retrieved_chunks = []
     live_events = []
+    tokens = 0
 
     if mode in {"library", "unified"}:
         retrieved_chunks = search_chunks(user_id, message, top_k=5)
@@ -47,12 +48,17 @@ def answer_query(user_id: str, message: str, mode: str = "unified") -> dict[str,
         )
 
     try:
-        answer = generate_answer(
+        generation = generate_answer_with_usage(
             question=message,
             mode=mode,
             historical_context=retrieved_chunks,
             live_context=live_events,
         )
+        if generation:
+            answer = generation["answer"]
+            tokens = int(generation.get("tokens") or 0)
+        else:
+            answer = None
     except Exception as exc:
         answer = None
         store.insert(
@@ -78,6 +84,7 @@ def answer_query(user_id: str, message: str, mode: str = "unified") -> dict[str,
             "answer": answer,
             "sources": sources,
             "latency_ms": latency_ms,
+            "tokens": tokens,
         },
     )
     store.insert(
@@ -97,6 +104,7 @@ def answer_query(user_id: str, message: str, mode: str = "unified") -> dict[str,
         "answer": answer,
         "sources": sources,
         "latency_ms": latency_ms,
+        "tokens": tokens,
         "mode": mode,
     }
 

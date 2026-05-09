@@ -5,13 +5,13 @@ import httpx
 from config import get_settings
 
 
-def generate_answer(
+def generate_answer_with_usage(
     *,
     question: str,
     mode: str,
     historical_context: list[dict[str, Any]],
     live_context: list[dict[str, Any]],
-) -> str | None:
+) -> dict[str, Any] | None:
     settings = get_settings()
     if not settings.groq_api_key:
         return None
@@ -47,7 +47,29 @@ def generate_answer(
     )
     response.raise_for_status()
     data = response.json()
-    return data["choices"][0]["message"]["content"].strip()
+    usage = data.get("usage") or {}
+    return {
+        "answer": data["choices"][0]["message"]["content"].strip(),
+        "tokens": int(usage.get("total_tokens") or 0),
+    }
+
+
+def generate_answer(
+    *,
+    question: str,
+    mode: str,
+    historical_context: list[dict[str, Any]],
+    live_context: list[dict[str, Any]],
+) -> str | None:
+    result = generate_answer_with_usage(
+        question=question,
+        mode=mode,
+        historical_context=historical_context,
+        live_context=live_context,
+    )
+    if not result:
+        return None
+    return str(result["answer"])
 
 
 def _build_prompt(

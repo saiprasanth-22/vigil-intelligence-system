@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
     qdrant_url: str = ""
     qdrant_api_key: str = ""
+    benchmark_vector_rag_url: str = "http://localhost:8081/api/chat/query"
+    benchmark_graphrag_url: str = "http://localhost:8000/health_data/query"
+    benchmark_vector_rag_token: str = "dev-demo-token"
+    benchmark_graphrag_username: str = "tigergraph"
+    benchmark_graphrag_password: str = "tigergraph"
 
     model_config = SettingsConfigDict(env_file=ENV_PATH, env_file_encoding="utf-8")
 

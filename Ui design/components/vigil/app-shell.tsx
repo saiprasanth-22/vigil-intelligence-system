@@ -6,7 +6,7 @@ import ParticleField from './particle-field'
 import { usePathname } from 'next/navigation'
 import { ReactNode } from 'react'
 
-const NAV_ORDER = ['/dashboard', '/library', '/live', '/chat', '/visualizer', '/connect', '/settings']
+const NAV_ORDER = ['/dashboard', '/library', '/live', '/chat', '/benchmark', '/visualizer', '/connect', '/settings']
 
 function getIndex(path: string) {
   return NAV_ORDER.findIndex(p => path.startsWith(p))
