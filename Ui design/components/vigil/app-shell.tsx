@@ -18,7 +18,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="min-h-screen vigil-dot-grid relative overflow-hidden"
+      className="min-h-screen vigil-dot-grid relative overflow-visible"
       style={{ backgroundColor: '#0a0a0f' }}
     >
       <div className="fixed inset-0 pointer-events-none z-0">

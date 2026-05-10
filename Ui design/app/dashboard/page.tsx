@@ -3,7 +3,7 @@
 import AppShell from '@/components/vigil/app-shell'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Search, X, FileText, Radio, MessageSquare, TrendingUp } from 'lucide-react'
+import { Bell, Search, X, TrendingUp } from 'lucide-react'
 
 /* ── useCountUp ──────────────────────────────────────────────── */
 function useCountUp(target: number, duration = 1500, delay = 0) {
@@ -34,12 +34,12 @@ function StatCard({
   wide = false,
 }: {
   label: string
-  value: number
+  value: number | null
   suffix?: string
   delay?: number
   wide?: boolean
 }) {
-  const count = useCountUp(value, 1400, delay)
+  const count = useCountUp(value ?? 0, 1400, delay)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -49,16 +49,19 @@ function StatCard({
       style={{ minHeight: 110 }}
     >
       <span className="vigil-label">{label}</span>
-      <span className="font-mono text-white font-bold" style={{ fontSize: 34 }}>
-        {count.toLocaleString()}{suffix}
-      </span>
+      {value === null ? (
+        <span className="text-[#4a4a6a] text-sm">No data yet</span>
+      ) : (
+        <span className="font-mono text-white font-bold" style={{ fontSize: 34 }}>
+          {count.toLocaleString()}{suffix}
+        </span>
+      )}
     </motion.div>
   )
 }
 
 /* ── VIGIL SCORE CARD ────────────────────────────────────────── */
 function VigilScoreCard() {
-  const score = useCountUp(87, 1800, 600)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -68,22 +71,9 @@ function VigilScoreCard() {
       style={{ minHeight: 110, border: '1px solid rgba(26,111,255,0.2)' }}
     >
       <span className="vigil-label">Vigil Score</span>
-      <div className="flex items-end gap-3">
-        <span
-          className="font-mono font-bold"
-          style={{
-            fontSize: 34,
-            background: 'linear-gradient(135deg, #1a6fff, #7b2fff)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          {score}
-        </span>
-        <div className="flex items-center gap-1 mb-1.5">
-          <TrendingUp size={12} className="text-[#00c875]" />
-          <span className="text-[#00c875] text-xs font-mono">+3 from yesterday</span>
-        </div>
+      <div className="flex items-center gap-2">
+        <TrendingUp size={14} className="text-[#4a4a6a]" />
+        <span className="text-[#4a4a6a] text-sm">No score yet</span>
       </div>
     </motion.div>
   )
@@ -96,37 +86,17 @@ const ACTIVITY_COLORS = {
   unified:  '#7b2fff',
 }
 
-const INITIAL_EVENTS = [
-  { id: 1, type: 'library' as const,  text: 'report_q3_2024.pdf indexed',           time: '14:32:01' },
-  { id: 2, type: 'live' as const,     text: 'Live stream AAPL detected anomaly',    time: '14:31:48' },
-  { id: 3, type: 'unified' as const,  text: 'Query: "summarise Q3 revenue trends"', time: '14:31:22' },
-  { id: 4, type: 'library' as const,  text: 'contracts_2024.docx embedding done',   time: '14:30:55' },
-  { id: 5, type: 'live' as const,     text: 'Confluence score reached 84',          time: '14:30:11' },
-  { id: 6, type: 'unified' as const,  text: 'Query: "list all active streams"',     time: '14:29:44' },
-  { id: 7, type: 'library' as const,  text: 'market_analysis.csv uploaded',         time: '14:29:02' },
-  { id: 8, type: 'live' as const,     text: 'New data stream: MSFT connected',      time: '14:28:30' },
-]
+type ActivityEvent = {
+  id: number
+  type: keyof typeof ACTIVITY_COLORS
+  text: string
+  time: string
+}
+
+const INITIAL_EVENTS: ActivityEvent[] = []
 
 function ActivityFeed() {
   const [events, setEvents] = useState(INITIAL_EVENTS)
-
-  useEffect(() => {
-    const newEvents = [
-      { type: 'live' as const,    text: 'Signal strength threshold crossed',    time: '' },
-      { type: 'library' as const, text: 'quarterly_review.pdf indexed',         time: '' },
-      { type: 'unified' as const, text: 'Query: "risk exposure this week"',     time: '' },
-    ]
-    let i = 0
-    const interval = setInterval(() => {
-      if (i >= newEvents.length) { clearInterval(interval); return }
-      const ev = newEvents[i]
-      const now = new Date()
-      const t = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`
-      setEvents(prev => [{ ...ev, id: Date.now(), time: t }, ...prev.slice(0, 9)])
-      i++
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [])
 
   return (
     <div className="overflow-y-auto" style={{ maxHeight: 280 }}>
@@ -149,13 +119,18 @@ function ActivityFeed() {
           </motion.div>
         ))}
       </AnimatePresence>
+      {events.length === 0 && (
+        <div className="flex items-center justify-center py-12">
+          <span className="text-[#4a4a6a] text-sm">No activity yet</span>
+        </div>
+      )}
     </div>
   )
 }
 
 /* ── STORAGE RING ────────────────────────────────────────────── */
 function StorageRing() {
-  const pct = 24
+  const pct = 0
   const r = 45
   const circ = 2 * Math.PI * r
   const offset = circ * (1 - pct / 100)
@@ -193,30 +168,14 @@ function StorageRing() {
       </div>
 
       <div className="w-full space-y-2">
-        {[
-          { label: 'PDFs',  val: 1.2, color: '#1a6fff' },
-          { label: 'CSVs',  val: 0.8, color: '#7b2fff' },
-          { label: 'Docs',  val: 0.4, color: '#ff6b1a' },
-        ].map(f => (
-          <div key={f.label} className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: f.color }} />
-            <span className="vigil-label flex-1">{f.label}</span>
-            <span className="font-mono text-xs text-[#a0a0b0]">{f.val} GB</span>
-          </div>
-        ))}
+        <div className="text-center text-[#4a4a6a] text-sm">No files uploaded</div>
       </div>
     </div>
   )
 }
 
 /* ── RECENT QUERIES ──────────────────────────────────────────── */
-const QUERIES = [
-  { query: 'Summarise Q3 revenue trends',    source: 'Library',   confidence: 94, time: '2m ago' },
-  { query: 'What is the current confluence?', source: 'Live',      confidence: 88, time: '5m ago' },
-  { query: 'Risk factors from contracts',     source: 'Both',      confidence: 71, time: '12m ago' },
-  { query: 'Compare AAPL vs MSFT signals',    source: 'Live',      confidence: 55, time: '18m ago' },
-  { query: 'Extract key clauses from docs',   source: 'Library',   confidence: 92, time: '25m ago' },
-]
+const QUERIES: Array<{ query: string; source: string; confidence: number; time: string }> = []
 
 function ConfidencePill({ score }: { score: number }) {
   const color = score >= 80 ? '#00c875' : score >= 60 ? '#ff6b1a' : '#ff2b2b'
@@ -233,11 +192,7 @@ function ConfidencePill({ score }: { score: number }) {
 /* ── NOTIFICATION BELL ───────────────────────────────────────── */
 function NotificationBell() {
   const [open, setOpen] = useState(false)
-  const ALERTS = [
-    { text: 'Confluence score reached 84', type: 'info', time: '2m ago' },
-    { text: 'Anomaly detected on AAPL stream', type: 'warning', time: '8m ago' },
-    { text: 'New document indexed successfully', type: 'info', time: '15m ago' },
-  ]
+  const alerts: Array<{ text: string; type: 'info' | 'warning'; time: string }> = []
   return (
     <div className="relative">
       <button
@@ -247,10 +202,12 @@ function NotificationBell() {
         data-interactive
       >
         <Bell size={16} className="text-[#a0a0b0]" />
-        <span
-          className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-          style={{ background: '#ff6b1a', boxShadow: '0 0 6px rgba(255,107,26,0.6)' }}
-        />
+        {alerts.length > 0 && (
+          <span
+            className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+            style={{ background: '#ff6b1a', boxShadow: '0 0 6px rgba(255,107,26,0.6)' }}
+          />
+        )}
       </button>
       <AnimatePresence>
         {open && (
@@ -266,7 +223,10 @@ function NotificationBell() {
               <span className="vigil-label text-[#a0a0b0]">Notifications</span>
               <button onClick={() => setOpen(false)}><X size={12} className="text-[#4a4a6a]" /></button>
             </div>
-            {ALERTS.map((a, i) => (
+            {alerts.length === 0 && (
+              <div className="py-6 text-center text-[#4a4a6a] text-sm">No notifications</div>
+            )}
+            {alerts.map((a, i) => (
               <div key={i} className="flex gap-2.5 py-2.5 border-b" style={{ borderColor: 'rgba(100,100,200,0.08)' }}>
                 <div
                   className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
@@ -337,10 +297,10 @@ export default function DashboardPage() {
 
         {/* Stat Cards — asymmetric 5-column grid */}
         <div className="grid gap-3" style={{ gridTemplateColumns: '2fr 1fr 1fr 2fr 1fr' }}>
-          <StatCard label="Total Files"     value={1247}  delay={0}   wide={false} />
-          <StatCard label="Active Streams"  value={8}     delay={100} />
-          <StatCard label="Queries Today"   value={342}   delay={200} />
-          <StatCard label="Storage Used"    value={2.4}   suffix=" GB" delay={300} />
+          <StatCard label="Total Files"     value={null}  delay={0}   wide={false} />
+          <StatCard label="Active Streams"  value={null}  delay={100} />
+          <StatCard label="Queries Today"   value={null}  delay={200} />
+          <StatCard label="Storage Used"    value={null}  suffix=" GB" delay={300} />
           <VigilScoreCard />
         </div>
 
@@ -419,6 +379,9 @@ export default function DashboardPage() {
                 <span className="font-mono text-xs text-[#4a4a6a]">{q.time}</span>
               </motion.div>
             ))}
+            {QUERIES.length === 0 && (
+              <div className="py-10 text-center text-[#4a4a6a] text-sm">No recent queries yet</div>
+            )}
           </div>
         </motion.div>
       </div>

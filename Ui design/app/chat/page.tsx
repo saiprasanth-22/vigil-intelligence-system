@@ -29,16 +29,16 @@ const SOURCE_CONFIGS: Record<Source, { label: string; color: string; bg: string 
 }
 
 const ACTIVE_CHIPS: Record<Source, string[]> = {
-  library: ['report_q3_2024.pdf', 'contracts_2024.docx', 'strategy_memo.pdf'],
-  live:    ['AAPL Stream', 'MSFT Stream', 'BTC Feed'],
-  both:    ['report_q3_2024.pdf', 'contracts_2024.docx', 'AAPL Stream', 'BTC Feed'],
+  library: [],
+  live: [],
+  both: [],
 }
 
 const SUGGESTIONS = [
-  'What are the key risk factors across all my data?',
-  'Compare Q3 performance with live market signals.',
-  'Summarise the most critical alerts from today.',
-  'What is the current confluence score and why?',
+  'What can you find in my uploaded documents?',
+  'Summarise the latest live events.',
+  'Compare library and live context.',
+  'What data sources are connected?',
 ]
 
 
@@ -116,12 +116,10 @@ function SourcePanel({ citedDoc, onClose }: { citedDoc: string; onClose: () => v
           <span className="text-white text-sm font-medium">{citedDoc}</span>
         </div>
         <p className="text-[#a0a0b0] text-xs leading-relaxed">
-          Relevant excerpt from this document: "Q3 2024 revenue increased by 12% year-over-year, driven primarily by
-          strong growth in the APAC region. Operating margins remained stable at 34.2%, reflecting disciplined
-          cost management despite inflationary pressures..."
+          No source preview is available for this citation.
         </p>
         <div className="mt-3 px-3 py-2 rounded-xl" style={{ background: 'rgba(26,111,255,0.06)', border: '1px solid rgba(26,111,255,0.15)' }}>
-          <span className="vigil-label">Page 4, Section 2.3</span>
+          <span className="vigil-label">Preview unavailable</span>
         </div>
       </div>
     </motion.div>
@@ -223,6 +221,9 @@ export default function ChatPage() {
                 {chip}
               </motion.span>
             ))}
+            {ACTIVE_CHIPS[source].length === 0 && (
+              <span className="text-[#4a4a6a] text-xs">No active sources connected</span>
+            )}
           </div>
         </div>
 
@@ -262,7 +263,9 @@ export default function ChatPage() {
                 }}>
                   <div>
                     <p className="text-white font-bold text-xl text-center mb-2">Ask anything across your data.</p>
-                    <p className="text-[#4a4a6a] text-sm text-center">Querying: {ACTIVE_CHIPS[source].join(', ')}</p>
+                    <p className="text-[#4a4a6a] text-sm text-center">
+                      {ACTIVE_CHIPS[source].length > 0 ? `Querying: ${ACTIVE_CHIPS[source].join(', ')}` : 'No active sources connected yet'}
+                    </p>
                   </div>
                   <div className="flex flex-col gap-2 w-full max-w-md">
                     {SUGGESTIONS.map((s, i) => (

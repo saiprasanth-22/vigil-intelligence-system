@@ -6,14 +6,13 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, Info, X } from 'lucide-react'
 
 /* ── PIPELINE NODES ──────────────────────────────────────────── */
-const PIPELINE_NODES = [
-  { id: 'L1', label: 'Filters',     sublabel: 'Data Ingestion' },
-  { id: 'L2', label: 'Regime',      sublabel: 'Classification' },
-  { id: 'L3', label: 'Signal',      sublabel: 'Detection' },
-  { id: 'L4', label: 'Confluence',  sublabel: 'Aggregation' },
-  { id: 'L5', label: 'Correlation', sublabel: 'Cross-Ref' },
-  { id: 'L6', label: 'Execution',   sublabel: 'Output' },
-]
+interface PipelineNodeDef {
+  id: string
+  label: string
+  sublabel: string
+}
+
+const PIPELINE_NODES: PipelineNodeDef[] = []
 
 function PipelineNode({
   node,
@@ -22,7 +21,7 @@ function PipelineNode({
   onClick,
   showPopup,
 }: {
-  node: typeof PIPELINE_NODES[0]
+  node: PipelineNodeDef
   active: boolean
   delay: number
   onClick: () => void
@@ -74,18 +73,7 @@ function PipelineNode({
           >
             <p className="vigil-label text-[#a0a0b0] mb-1.5">Node Stats</p>
             <div className="space-y-1">
-              <div className="flex justify-between">
-                <span className="vigil-label">Processed</span>
-                <span className="font-mono text-xs text-white">14,821</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="vigil-label">Filtered</span>
-                <span className="font-mono text-xs text-[#ff6b1a]">342</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="vigil-label">Latency</span>
-                <span className="font-mono text-xs text-[#00c875]">2.1ms</span>
-              </div>
+              <p className="text-xs text-[#4a4a6a]">No node metrics yet</p>
             </div>
           </motion.div>
         )}
@@ -134,7 +122,6 @@ function Waveform({ active }: { active: boolean }) {
         <motion.div
           key={i}
           className="flex-1 rounded-t-sm"
-          style={{ background: 'linear-gradient(180deg, #1a6fff, rgba(26,111,255,0.2))', minWidth: 2 }}
           animate={active ? {
             scaleY: [
               Math.random() * 0.6 + 0.1,
@@ -165,22 +152,6 @@ interface DataRow {
   fresh: boolean
 }
 
-const SOURCES = ['AAPL', 'MSFT', 'BTC', 'TSLA', 'ETH']
-const SIGNALS = ['Long', 'Short', 'Neutral', 'Hold', 'Close']
-const DELTAS = ['+0.34', '-0.12', '+1.21', '-0.67', '+0.08', '+2.14']
-
-function makeRow(): DataRow {
-  const now = new Date()
-  return {
-    id: Date.now() + Math.random(),
-    time: `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`,
-    source: SOURCES[Math.floor(Math.random() * SOURCES.length)],
-    signal: SIGNALS[Math.floor(Math.random() * SIGNALS.length)],
-    delta: DELTAS[Math.floor(Math.random() * DELTAS.length)],
-    fresh: true,
-  }
-}
-
 /* ── ALERT PANEL ─────────────────────────────────────────────── */
 interface Alert {
   id: number
@@ -195,11 +166,7 @@ const ALERT_CONFIGS = {
   info:     { color: '#1a6fff', icon: Info },
 }
 
-const INITIAL_ALERTS: Alert[] = [
-  { id: 1, type: 'warning',  text: 'AAPL signal anomaly detected',       time: '14:31:48' },
-  { id: 2, type: 'info',     text: 'Confluence reached threshold (84)',   time: '14:30:11' },
-  { id: 3, type: 'info',     text: 'New stream connected: MSFT',          time: '14:29:02' },
-]
+const INITIAL_ALERTS: Alert[] = []
 
 /* ── PAGE ────────────────────────────────────────────────────── */
 export default function LivePage() {
@@ -213,43 +180,15 @@ export default function LivePage() {
 
   const handleConnect = () => {
     setConnected(true)
-    // Animate nodes one by one
     PIPELINE_NODES.forEach((_, i) => {
       setTimeout(() => setActiveNodes(prev => [...prev, i]), 300 + i * 200)
     })
-    // Count up confluence
-    let c = 0
-    const iv = setInterval(() => {
-      c += 2
-      setConfluence(Math.min(c, 84))
-      if (c >= 84) clearInterval(iv)
-    }, 30)
   }
 
   useEffect(() => {
     if (!connected) return
-    const interval = setInterval(() => {
-      const row = makeRow()
-      setRows(prev => [row, ...prev.slice(0, 19)])
-      setTimeout(() => setRows(prev => prev.map(r => r.id === row.id ? { ...r, fresh: false } : r)), 600)
-
-      if (Math.random() < 0.15) {
-        const newAlert: Alert = {
-          id: Date.now(),
-          type: Math.random() < 0.2 ? 'critical' : Math.random() < 0.5 ? 'warning' : 'info',
-          text: [
-            'Signal strength threshold crossed',
-            'Confluence score updated to ' + (80 + Math.floor(Math.random() * 15)),
-            'AAPL regime change detected',
-            'BTC correlation anomaly',
-          ][Math.floor(Math.random() * 4)],
-          time: new Date().toLocaleTimeString('en-US', { hour12: false }),
-        }
-        if (newAlert.type === 'critical') { setEdgePulse(true); setTimeout(() => setEdgePulse(false), 1000) }
-        setAlerts(prev => [newAlert, ...prev.slice(0, 9)])
-      }
-    }, 1200)
-    return () => clearInterval(interval)
+    setRows([])
+    setAlerts([])
   }, [connected])
 
   useEffect(() => {
@@ -301,8 +240,8 @@ export default function LivePage() {
         {/* Pipeline + Confluence */}
         <div className="vigil-card p-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              {PIPELINE_NODES.map((node, i) => (
+            <div className="flex items-center gap-1 min-h-[72px]">
+              {PIPELINE_NODES.length > 0 ? PIPELINE_NODES.map((node, i) => (
                 <div key={node.id} className="flex items-center">
                   <PipelineNode
                     node={node}
@@ -315,7 +254,9 @@ export default function LivePage() {
                     <PipelineLine active={activeNodes.includes(i) && activeNodes.includes(i + 1)} delay={0} />
                   )}
                 </div>
-              ))}
+              )) : (
+                <div className="text-[#4a4a6a] text-sm">No pipeline stages configured</div>
+              )}
             </div>
 
             {/* Confluence */}
@@ -329,9 +270,9 @@ export default function LivePage() {
               <span className="vigil-label mt-1">Confluence Score</span>
               <div className="flex items-center gap-1.5 mt-1.5">
                 <div className="w-16 h-0.5 rounded-full" style={{ background: 'rgba(100,100,200,0.2)' }}>
-                  <div className="h-full rounded-full" style={{ width: '80%', background: '#ff6b1a' }} />
+                  <div className="h-full rounded-full" style={{ width: '0%', background: '#ff6b1a' }} />
                 </div>
-                <span className="vigil-label">Threshold: 80</span>
+                <span className="vigil-label">No threshold set</span>
               </div>
             </div>
           </div>
@@ -378,7 +319,7 @@ export default function LivePage() {
                   </motion.div>
                 ))}
               </AnimatePresence>
-              {!connected && (
+              {rows.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-8 gap-2">
                   <motion.div
                     animate={{ opacity: [0.4, 1, 0.4] }}
@@ -386,7 +327,7 @@ export default function LivePage() {
                     className="w-2 h-2 rounded-full"
                     style={{ background: '#4a4a6a' }}
                   />
-                  <p className="vigil-label">Waiting for connection...</p>
+                  <p className="vigil-label">{connected ? 'No live events' : 'Waiting for connection...'}</p>
                 </div>
               )}
             </div>
@@ -422,6 +363,11 @@ export default function LivePage() {
                   )
                 })}
               </AnimatePresence>
+              {alerts.length === 0 && (
+                <div className="flex items-center justify-center py-10">
+                  <span className="text-[#4a4a6a] text-sm">No live events</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

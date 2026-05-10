@@ -245,7 +245,8 @@
   -webkit-backdrop-filter: blur(20px);
   border-radius: 20px;
   will-change: transform;
-  contain: layout style;
+  contain: layout;
+  overflow: visible;
 }
 
 /* ======================================================

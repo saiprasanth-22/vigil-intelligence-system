@@ -3,7 +3,7 @@
 import AppShell from '@/components/vigil/app-shell'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useRef } from 'react'
-import { Search, Upload, FileText, Send, RotateCcw } from 'lucide-react'
+import { Search, Upload, FileText, Send } from 'lucide-react'
 
 type FileStatus = 'processing' | 'indexing' | 'ready'
 
@@ -16,13 +16,7 @@ interface DocFile {
   progress?: number
 }
 
-const INITIAL_FILES: DocFile[] = [
-  { id: 1, name: 'report_q3_2024.pdf',      size: '2.4 MB', date: 'Today',    status: 'ready' },
-  { id: 2, name: 'market_analysis.csv',     size: '840 KB', date: 'Today',    status: 'indexing' },
-  { id: 3, name: 'contracts_2024.docx',     size: '1.1 MB', date: 'Yesterday',status: 'ready' },
-  { id: 4, name: 'strategy_memo.pdf',       size: '560 KB', date: '2 days ago',status: 'ready' },
-  { id: 5, name: 'financials_2024.xlsx',    size: '3.2 MB', date: '3 days ago',status: 'processing', progress: 62 },
-]
+const INITIAL_FILES: DocFile[] = []
 
 const STATUS_CONFIGS: Record<FileStatus, { label: string; color: string; bg: string }> = {
   processing: { label: 'Processing', color: '#ff6b1a', bg: 'rgba(255,107,26,0.12)' },
@@ -87,14 +81,7 @@ interface ChatMsg {
   citations?: string[]
 }
 
-const INITIAL_MSGS: ChatMsg[] = [
-  {
-    id: 1,
-    role: 'ai',
-    text: 'I have indexed your documents. Ask me anything about the content.',
-    citations: ['report_q3_2024.pdf', 'contracts_2024.docx'],
-  },
-]
+const INITIAL_MSGS: ChatMsg[] = []
 
 function StreamingText({ text }: { text: string }) {
   const [shown, setShown] = useState('')
@@ -123,7 +110,7 @@ export default function LibraryPage() {
   const [files, setFiles] = useState(INITIAL_FILES)
   const [activeTab, setActiveTab] = useState('All')
   const [search, setSearch] = useState('')
-  const [selectedFile, setSelectedFile] = useState<DocFile>(INITIAL_FILES[0])
+  const [selectedFile, setSelectedFile] = useState<DocFile | null>(INITIAL_FILES[0] ?? null)
   const [messages, setMessages] = useState<ChatMsg[]>(INITIAL_MSGS)
   const [input, setInput] = useState('')
   const [isDragging, setIsDragging] = useState(false)
@@ -144,16 +131,18 @@ export default function LibraryPage() {
     setInput('')
     setThinking(true)
 
-    const RESPONSES = [
-      { text: `Based on ${selectedFile.name}, the key insight is that Q3 revenue increased 12% YoY driven by expansion in the APAC region. Margins held steady at 34.2%.`, citations: [selectedFile.name] },
-      { text: 'I found 3 relevant clauses in your contracts related to this. The termination clause on page 4 is most relevant.', citations: ['contracts_2024.docx'] },
-      { text: 'The market analysis shows a bullish trend for the sector with 15% projected growth over the next 2 quarters.', citations: ['market_analysis.csv'] },
-    ]
-    const resp = RESPONSES[Math.floor(Math.random() * RESPONSES.length)]
-
     setTimeout(() => {
       setThinking(false)
-      setMessages(prev => [...prev, { id: Date.now(), role: 'ai', ...resp }])
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          role: 'ai',
+          text: selectedFile
+            ? 'This document has not been indexed by a connected backend yet.'
+            : 'Upload a file before asking document-specific questions.',
+        },
+      ])
     }, 1800)
   }
 
@@ -170,6 +159,14 @@ export default function LibraryPage() {
         status: 'processing',
         progress: 0,
       }, ...prev])
+      setSelectedFile(prev => prev ?? {
+        id: Date.now() + Math.random(),
+        name: f.name,
+        size: `${(f.size / 1024 / 1024).toFixed(1)} MB`,
+        date: 'Just now',
+        status: 'processing',
+        progress: 0,
+      })
     })
   }
 
@@ -223,6 +220,13 @@ export default function LibraryPage() {
                 onClick={() => setSelectedFile(f)}
               />
             ))}
+            {filtered.length === 0 && (
+              <div className="vigil-card p-6 text-center">
+                <FileText size={18} className="mx-auto mb-3 text-[#4a4a6a]" />
+                <p className="text-[#a0a0b0] text-sm">No files uploaded</p>
+                <p className="text-[#4a4a6a] text-xs mt-1">Drop files below to start indexing documents.</p>
+              </div>
+            )}
           </div>
 
           {/* Drop zone */}
@@ -273,22 +277,21 @@ export default function LibraryPage() {
                 </span>
               </div>
               <div className="flex flex-wrap gap-2 mb-3">
-                {['Revenue Growth', 'APAC Expansion', 'Q3 Margins', 'Key Metrics', 'Risk Factors'].map(chip => (
-                  <span
-                    key={chip}
-                    className="vigil-pill"
-                    style={{ background: 'rgba(26,111,255,0.1)', color: '#1a6fff', border: '1px solid rgba(26,111,255,0.2)' }}
-                  >
-                    {chip}
-                  </span>
-                ))}
+                <span className="vigil-pill" style={{ background: 'rgba(100,100,200,0.08)', color: '#4a4a6a' }}>
+                  Awaiting indexing
+                </span>
               </div>
               <p className="text-[#a0a0b0] text-sm leading-relaxed">
-                This document contains Q3 2024 financial results. Key highlights include 12% revenue growth YoY,
-                strong performance in APAC markets, and maintained operating margins at 34.2%.
-                Three risk factors identified in the regulatory section.
+                No preview or extracted summary is available yet.
               </p>
             </motion.div>
+          )}
+          {!selectedFile && (
+            <div className="vigil-card p-5 text-center">
+              <FileText size={18} className="mx-auto mb-3 text-[#4a4a6a]" />
+              <p className="text-[#a0a0b0] text-sm">Select or upload a document</p>
+              <p className="text-[#4a4a6a] text-xs mt-1">Document previews will appear here after files are connected.</p>
+            </div>
           )}
 
           {/* Chat */}
@@ -296,6 +299,14 @@ export default function LibraryPage() {
             <span className="vigil-label text-[#a0a0b0]">Document Chat</span>
 
             <div className="flex-1 overflow-y-auto space-y-3">
+              {messages.length === 0 && (
+                <div className="flex h-full items-center justify-center text-center">
+                  <div>
+                    <p className="text-[#a0a0b0] text-sm">No document chat yet</p>
+                    <p className="text-[#4a4a6a] text-xs mt-1">Upload and select a file to begin.</p>
+                  </div>
+                </div>
+              )}
               {messages.map((msg, i) => (
                 <motion.div
                   key={msg.id}

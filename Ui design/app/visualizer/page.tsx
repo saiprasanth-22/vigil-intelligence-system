@@ -2,20 +2,18 @@
 
 import AppShell from '@/components/vigil/app-shell'
 import { motion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
 
-/* ── Animated bar chart ──────────────────────────────────────── */
-const CHART_DATA = [
-  { label: 'Mon', library: 42, live: 28, chat: 15 },
-  { label: 'Tue', library: 65, live: 44, chat: 23 },
-  { label: 'Wed', library: 38, live: 71, chat: 31 },
-  { label: 'Thu', library: 89, live: 55, chat: 42 },
-  { label: 'Fri', library: 74, live: 82, chat: 28 },
-  { label: 'Sat', library: 31, live: 24, chat: 11 },
-  { label: 'Sun', library: 56, live: 38, chat: 19 },
-]
+const CHART_DATA: Array<{ label: string; library: number; live: number; chat: number }> = []
 
 function BarChart() {
+  if (CHART_DATA.length === 0) {
+    return (
+      <div className="h-48 flex items-center justify-center">
+        <span className="text-[#4a4a6a] text-sm">No chart data yet</span>
+      </div>
+    )
+  }
+
   const max = Math.max(...CHART_DATA.flatMap(d => [d.library, d.live, d.chat]))
 
   return (
@@ -23,11 +21,11 @@ function BarChart() {
       {CHART_DATA.map((d, i) => (
         <div key={d.label} className="flex-1 flex flex-col items-center gap-2">
           <div className="flex items-end gap-0.5 flex-1 w-full">
-            {([
+            {[
               { val: d.library, color: '#1a6fff' },
-              { val: d.live,    color: '#ff6b1a' },
-              { val: d.chat,    color: '#7b2fff' },
-            ]).map((bar, j) => (
+              { val: d.live, color: '#ff6b1a' },
+              { val: d.chat, color: '#7b2fff' },
+            ].map((bar, j) => (
               <motion.div
                 key={j}
                 initial={{ scaleY: 0 }}
@@ -52,7 +50,6 @@ function BarChart() {
   )
 }
 
-/* ── Metric ring ─────────────────────────────────────────────── */
 function MetricRing({ label, value, color, delay }: { label: string; value: number; color: string; delay: number }) {
   const r = 38
   const circ = 2 * Math.PI * r
@@ -64,7 +61,9 @@ function MetricRing({ label, value, color, delay }: { label: string; value: numb
         <svg width="96" height="96" style={{ transform: 'rotate(-90deg)' }}>
           <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(100,100,200,0.1)" strokeWidth="7" />
           <motion.circle
-            cx="48" cy="48" r={r}
+            cx="48"
+            cy="48"
+            r={r}
             fill="none"
             stroke={color}
             strokeWidth="7"
@@ -84,6 +83,13 @@ function MetricRing({ label, value, color, delay }: { label: string; value: numb
   )
 }
 
+const METRICS: Array<{ label: string; value: number; color: string; delay: number }> = []
+
+const SOURCE_PANELS: Array<{ title: string; items: string[] }> = [
+  { title: 'Top Queried Documents', items: [] },
+  { title: 'Most Active Streams', items: [] },
+]
+
 export default function VisualizerPage() {
   return (
     <AppShell>
@@ -93,14 +99,8 @@ export default function VisualizerPage() {
           <p className="text-[#4a4a6a] text-sm mt-0.5">Data activity overview</p>
         </div>
 
-        {/* Top rings */}
         <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-          {[
-            { label: 'Queries Resolved', value: 94, color: '#1a6fff', delay: 200 },
-            { label: 'Index Coverage',   value: 87, color: '#7b2fff', delay: 300 },
-            { label: 'Stream Uptime',    value: 99, color: '#00c875', delay: 400 },
-            { label: 'Alert Rate',       value: 12, color: '#ff6b1a', delay: 500 },
-          ].map(m => (
+          {METRICS.map(m => (
             <motion.div
               key={m.label}
               initial={{ opacity: 0, y: 20 }}
@@ -111,9 +111,13 @@ export default function VisualizerPage() {
               <MetricRing {...m} />
             </motion.div>
           ))}
+          {METRICS.length === 0 && (
+            <div className="vigil-card p-5 col-span-4 flex items-center justify-center min-h-[140px]">
+              <span className="text-[#4a4a6a] text-sm">No metrics yet</span>
+            </div>
+          )}
         </div>
 
-        {/* Bar chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -125,8 +129,8 @@ export default function VisualizerPage() {
             <div className="flex gap-4">
               {[
                 { label: 'Library', color: '#1a6fff' },
-                { label: 'Live',    color: '#ff6b1a' },
-                { label: 'Chat',    color: '#7b2fff' },
+                { label: 'Live', color: '#ff6b1a' },
+                { label: 'Chat', color: '#7b2fff' },
               ].map(l => (
                 <div key={l.label} className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
@@ -138,12 +142,8 @@ export default function VisualizerPage() {
           <BarChart />
         </motion.div>
 
-        {/* Source breakdown */}
         <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-          {[
-            { title: 'Top Queried Documents', items: ['report_q3_2024.pdf — 48 queries', 'contracts_2024.docx — 31 queries', 'market_analysis.csv — 22 queries', 'strategy_memo.pdf — 18 queries'] },
-            { title: 'Most Active Streams', items: ['AAPL — 1,241 events/hr', 'MSFT — 892 events/hr', 'BTC — 3,441 events/hr', 'ETH — 2,187 events/hr'] },
-          ].map((panel, i) => (
+          {SOURCE_PANELS.map((panel, i) => (
             <motion.div
               key={panel.title}
               initial={{ opacity: 0, y: 20 }}
@@ -156,10 +156,12 @@ export default function VisualizerPage() {
                 {panel.items.map((item, j) => (
                   <div key={j} className="flex items-center gap-2.5">
                     <span className="font-mono text-xs text-[#4a4a6a]" style={{ minWidth: 16 }}>{j + 1}</span>
-                    <span className="text-xs text-[#a0a0b0] flex-1">{item.split(' — ')[0]}</span>
-                    <span className="font-mono text-xs text-white">{item.split(' — ')[1]}</span>
+                    <span className="text-xs text-[#a0a0b0] flex-1">{item}</span>
                   </div>
                 ))}
+                {panel.items.length === 0 && (
+                  <div className="py-8 text-center text-[#4a4a6a] text-sm">No data yet</div>
+                )}
               </div>
             </motion.div>
           ))}

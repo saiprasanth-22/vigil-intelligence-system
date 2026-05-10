@@ -21,7 +21,7 @@ def answer_query(user_id: str, message: str, mode: str = "unified") -> dict[str,
     tokens = 0
 
     if mode in {"library", "unified"}:
-        retrieved_chunks = search_chunks(user_id, message, top_k=5)
+        retrieved_chunks = search_chunks(user_id, message, top_k=3)
         sources.extend(
             {
                 "type": "file",

@@ -65,6 +65,20 @@ class QdrantStore:
         response.raise_for_status()
         return response.json().get("result", [])
 
+    def warm_collection(self, *, user_id: str) -> bool:
+        if not self.enabled:
+            return False
+
+        collection = self._collection(user_id)
+        self._ensure_collection(collection)
+        response = httpx.get(
+            f"{self._base_url()}/collections/{collection}",
+            headers=self._headers(),
+            timeout=30,
+        )
+        response.raise_for_status()
+        return True
+
     def delete_file(self, *, user_id: str, file_id: str) -> bool:
         if not self.enabled:
             return False

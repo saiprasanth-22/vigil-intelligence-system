@@ -84,7 +84,7 @@ export default function Sidebar() {
               className="absolute left-3 right-3 rounded-xl"
               style={{
                 height: 40,
-                top: activeIndex * 48 + 4,
+                top: activeIndex * 48 + 16,
                 background: 'rgba(26,111,255,0.08)',
               }}
               transition={{ type: 'spring', stiffness: 400, damping: 38 }}
@@ -98,25 +98,28 @@ export default function Sidebar() {
             <button
               key={item.href}
               onClick={() => router.push(item.href)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl relative group mb-1"
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl relative group mb-1 overflow-visible"
               style={{ height: 40, marginBottom: 8 }}
             >
               {/* Active gradient left border */}
               {isActive && (
                 <motion.div
                   layoutId="active-border"
-                  className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full"
-                  style={{ background: 'linear-gradient(180deg, #1a6fff, #7b2fff)' }}
+                  className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full z-10"
+                  style={{
+                    background: 'linear-gradient(180deg, #1a6fff, #7b2fff)',
+                    boxShadow: '0 0 10px rgba(123,47,255,0.55)',
+                  }}
                   transition={{ type: 'spring', stiffness: 400, damping: 38 }}
                 />
               )}
               <item.icon
                 size={16}
-                className="flex-shrink-0"
+                className="flex-shrink-0 relative z-10"
                 style={{ color: isActive ? '#1a6fff' : '#4a4a6a' }}
               />
               <span
-                className="text-sm font-medium transition-colors"
+                className="text-sm font-medium transition-colors relative z-10"
                 style={{ color: isActive ? '#ffffff' : '#a0a0b0' }}
               >
                 {item.label}
